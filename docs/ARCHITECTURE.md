@@ -99,7 +99,7 @@ Sınırlar: claude.ai çerçevesi mikrofona doğrudan erişime izin vermez, sayf
 | Prototipte | Pilotta |
 | --- | --- |
 | Gömülü sentetik JSON | MCP ve endüstriyel adaptörler |
-| claude.ai yayın sayfası | Tesisin kendi alan adında uygulama, model erişimi KAI üzerinden |
+| claude.ai yayın sayfası | Tesisin kendi alan adında uygulama, model erişimi kurumun model geçidi ya da Anthropic API üzerinden |
 | Klavye diktesi | Uygulama içi ses kaydı, sunucuda yazıya çevirme |
 | Taslak e-posta | Kurumun e-posta servisi, onay sonrası |
 | Sabit eşikler | Makine ve üretici bazında konfigürasyon |

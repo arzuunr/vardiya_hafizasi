@@ -1,6 +1,6 @@
 # Devir Teslim Ajanı · Claude Code Çalışma Planı (v3, üretim mavi yaka + sigorta)
 
-Claude Code bu dosyayı sırayla uygular. Kabul kriteri doğrulanmadan sonraki göreve geçilmez. Tüm veri sentetiktir. T1–T8 ideathon kapsamı, T9 sonrası ürün yol haritası.
+Claude Code bu dosyayı sırayla uygular. Kabul kriteri doğrulanmadan sonraki göreve geçilmez. Tüm veri sentetiktir. T1–T8 ilk sürüm, T9 sonrası yol haritası.
 
 Başlangıç komutu:
 
@@ -82,7 +82,7 @@ HandoverDoc {done[], open_items[], pending_decisions[], tacit_knowledge[],
              her kalem: {text, node_ids[]}
 ```
 
-## Görevler (ideathon kapsamı)
+## Görevler (ilk sürüm)
 
 ### T1 · Konfigürasyon
 Üç yaml, aynı anahtarlar: `sector`, `asset_type`, `entity_dictionary` (id, label, synonyms), `terminology`, `critical_info_rules`, `sources`, `handover_template`, `modes` (shift, personnel), `idle_task_days: 30`, `repeat_threshold: 3`, `confidence_threshold: 0.7`, `role_matrix`.
@@ -123,7 +123,7 @@ Mavi yaka görünümü: makine QR ekranı (son 72 saat, en fazla 5 madde, büyü
 `eval/run_eval.py`: üç zor vaka yakalandı mı.
 Kabul: tarayıcıda çift tıkla açılır, konsol hatasız, üç vaka eval'de geçer.
 
-## Görevler (yol haritası, ideathon sonrası)
+## Görevler (yol haritası)
 
 ### T9 · Brifing ve Aksiyon ajanları
 `briefing.md`: gün sonu, fabrika müdürü, tek sayfa. `action_card.md`: rol bazlı, `role_matrix` ile görev tanımına düşen kart, Probability zorunlu.
@@ -137,14 +137,5 @@ Kabul: onaysız istek reddedilir, paket hiçbir kişisel değerlendirme içermez
 Kabul/ret ve gerçekleşen sonuç kaydı, olasılıkların yeniden hesabı, ret gerekçelerinin sınıflanması, sözlük güncelleme önerisi (insan onaylı).
 
 ### T12 · Gerçek bağlayıcılar
-OPC-UA/MQTT, ERP (SAP PM), PLM, RFID, Obsidian, Trello adaptörleri. KAI üzerinden model erişimi.
+OPC-UA/MQTT, ERP (SAP PM), PLM, RFID, Obsidian, Trello adaptörleri. Model erişimi kurumun kendi model geçidi ya da Anthropic API üzerinden.
 
-## Teslim eşlemesi
-
-| Teslim | Kaynak |
-| --- | --- |
-| Kanıt dosyası | prompts/ + out/*/ + model.txt, Seviye A |
-| Ürün Hipotez Kartı | Claude Doc |
-| Sunum 4. slayt | ui/index.html, otomotiv yan sanayi zor vakası (n=7) |
-| Yol haritası slaytı | T9–T12 |
-| Dosya adı | Takım-[No]_DevirTeslimAjani_[Slayt / Kanıt / Kart] |
