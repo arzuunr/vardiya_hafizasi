@@ -729,7 +729,7 @@ $("#pSave").onclick = async () => {
   if (recording) stopVoice();
   const raw = $("#pText").value.trim(); if (!raw) { $("#pSaveState").textContent = "Önce notunu yaz."; return; }
   const person = $("#pPerson").value, mid = $("#pMachine").value;
-  const rec = {id:"LG-" + Date.now().toString(36).toUpperCase(), ts:isoLocal(new Date(NOW.getTime() + (Date.now() % 600000))), person, machine:mid, raw, kind:/ramak kala|kıl payı|az kalsın/i.test(raw) ? "near_miss" : "note"};
+  const rec = {id:"LG-" + Date.now().toString(36).toUpperCase(), ts:isoLocal(new Date(NOW.getTime() - (Date.now() % 600000))), person, machine:mid, raw, kind:/ramak kala|kıl payı|az kalsın/i.test(raw) ? "near_miss" : "note"};
   rec.source = voiceUsed ? "voice" : "text"; voiceUsed = false;
   if (!sample) { await saveLog(rec); $("#pResult").innerHTML = `<div class="okbox">Not ham haliyle makineye işlendi.</div>`; $("#pText").value=""; render72(); renderFloor(); return; }
   $("#pSave").disabled = true; $("#pResult").innerHTML = `<p class="thinking">Ajan notu düzenliyor…</p>`;

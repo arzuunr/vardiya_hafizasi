@@ -34,7 +34,7 @@ Bu ekranları kod üretir. Ajanın gerçek çıktıları bir sonraki bölümde.
 
 ## Ajan iş başında
 
-Aşağıdaki görüntüler canlı prototipten alındı, ajan çıktıları düzenlenmedi. Numaralı notlar neye bakmanız gerektiğini gösteriyor. Görüntüler alındığında ajan cevaplarındaki Markdown işaretleri henüz biçimlendirilmiyordu, güncel prototipte kalın yazı ve tıklanabilir kaynak rozetleri olarak görünüyorlar.
+Aşağıdaki görüntüler canlı prototipten alındı, ajan çıktıları düzenlenmedi. Numaralı notlar neye bakmanız gerektiğini gösteriyor. Kök neden ve vardiya devri görselleri, ajan cevaplarındaki Markdown biçimlendirmesi eklenmeden önce alındı. Ajana sor görselleri güncel prototipten. Düzenlenmemiş tüm ekran görüntüleri [docs/images/agent](docs/images/agent) klasöründe.
 
 ![Ajan kök neden yazar, kod kanıtı tutar](docs/images/ajan-kok-neden.png)
 
@@ -121,7 +121,8 @@ docs/ARCHITECTURE.md        Katmanlar, veri modeli, kod ve GenAI ayrımı, promp
 docs/SYNTHETIC_DATA.md      Verinin nasıl üretildiği ve sınırları
 docs/DEMO.md                Adım adım demo turu
 docs/CLAUDE_CODE_PLAN.md    Ürünleştirme için görev planı
-docs/images/                Ekran görüntüleri
+docs/images/                README görselleri
+docs/images/agent/          Ajanın düzenlenmemiş ekran görüntüleri
 ```
 
 ## Yol haritası
