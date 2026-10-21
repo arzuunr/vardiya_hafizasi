@@ -6,7 +6,7 @@
 
 **In English:** A GenAI prototype for manufacturing shift handovers. Field notes, sensor data, downtime records and work orders are linked to the machine they belong to. Code computes every number (thresholds, trends, downtime probability with sample size, skill gaps). An LLM agent writes the handover file, root cause hypotheses and alerts, citing a source record for every sentence. A human approves. All data is synthetic.
 
-![Hat haritası](docs/images/01-hat-haritasi.png)
+![Hat haritası](docs/images/hat-haritasi.png)
 
 **Canlı prototip (ajan dahil):** https://claude.ai/artifact/AvF5s4LY8wsNi71X9fczkV
 **Demo videosu (20 sn):** https://claude.ai/artifact/BDzZWvWQh2NLraURv4u9d1
@@ -21,35 +21,28 @@ Vardiya Hafızası bilgiyi kişiye değil **makineye** bağlar. Kimse kimseye ha
 
 ## Ne yapıyor
 
-Görüntüler canlı prototipten alındı. Ajan çıktıları gerçek model çıktısıdır, düzenlenmedi. Tesis ve veriler sentetik.
+| | |
+| --- | --- |
+| ![Saha telefonu](docs/images/saha-telefonu.png) | **Saha telefonu.** Operatör eldivenle uzun rapor yazmaz. Telefonuna konuşur, ajan argo ve yazım hatalı notu düzgün bir kayda çevirir, makineye bağlar, güvenlik işareti koyar, sonraki vardiyaya iş bırakır. |
+| ![Makine detayı](docs/images/makine-detayi.png) | **Makine detayı ve anomaliler.** Sensör grafikleri, RFID bileşen ömrü, MTBF ve MTTR. Kod eşik dışı dönemleri, saat tekrarını, eğilimi ve kritik eşiğe kalan süreyi bulur. Her anomali için ajan kök neden hipotezi üretir. |
+| ![Vardiya bağlamı](docs/images/vardiya-baglami.png) | **Vardiya devri.** Kod son 8 saati, riskleri ve gelen ekipteki yetkinlik açığını toplar. Ajan devir dosyasını, rol bazlı aksiyonları ve personel önerisini yazar. Her cümlenin yanında kaynak rozeti var. |
+| ![Not kontrolü](docs/images/not-kontrolu.png) | **Not kontrolü.** Yanlış makineye girilmiş, sensörle çelişen ya da yetki kuralına uymayan notları kod yakalar. Tek tuşla düzeltilir, kişiyi değil kaydı kontrol eder. |
 
-### 1. Hat haritası ve makine detayı
-Her makinenin durumu sensör eşiklerinden ve geçmiş duruşlardan kodla hesaplanır. Pres-3 sarı, çünkü sabah geçmişte duruşa dönmüş bir desen görüldü. Olasılık örneklem büyüklüğüyle verilir: %71, n=7. Görüntü sayfanın en üstünde.
+Bunlara ek olarak: izinden dönen kişiye ilk sabah brifingi, rol tablosuna göre uyarılar ve e-posta taslakları, veriyi araçlarla kendisi sorgulayan bir “Ajana sor” ekranı.
 
-### 2. Anomali için kök neden analizi
-Kod her sabah 06:00 civarında tekrarlayan basınç düşüşünü bulur. Ajan 5 Neden, balık kılçığı ve ERP kodu kontrolü çıkarır, kök nedeni “hipotez” olarak etiketler, duruşa dönmeden yapılacakları ve kesin karar için eksik veriyi yazar.
+Bu ekranları kod üretir. Ajanın gerçek çıktıları bir sonraki bölümde.
 
-<p><img src="docs/images/02-kok-neden-5-neden.png" width="49%" alt="Kök neden: 5 Neden ve ERP kodu kontrolü"> <img src="docs/images/03-kok-neden-balik-kilcigi.png" width="49%" alt="Kök neden: balık kılçığı ve duruşa dönmeden"></p>
+## Ajan iş başında
 
-### 3. Saha telefonu ve vardiya devri
-Operatör notunu yazar ya da dikte eder, ajan onu makinenin defterine düzgün bir kayıt olarak işler. Vardiya geçişinde kod son 8 saati, riskleri ve gelen ekipteki yetkinlik açığını toplar, ajan kaynak gösteren devir dosyasını yazar.
+Aşağıdaki görüntüler canlı prototipten alındı, ajan çıktıları düzenlenmedi. Numaralı notlar neye bakmanız gerektiğini gösteriyor. Görüntüler alındığında ajan cevaplarındaki Markdown işaretleri henüz biçimlendirilmiyordu, güncel prototipte kalın yazı ve tıklanabilir kaynak rozetleri olarak görünüyorlar.
 
-<p><img src="docs/images/04-saha-telefonu.png" width="49%" alt="Saha telefonu"> <img src="docs/images/05-vardiya-devri.png" width="49%" alt="Vardiya devri"></p>
+![Ajan kök neden yazar, kod kanıtı tutar](docs/images/ajan-kok-neden.png)
 
-### 4. İzin dönüşü, not kontrolü ve uyarılar
-İzinden dönen ustaya yokken değişenler ve onu bekleyen işler. Yanlış makineye girilmiş ya da sensörle çelişen notları kod yakalar ve tek tuşla düzeltilir. Uyarılar rol tablosuna göre doğru kişilere gider.
+![Vardiya devri ve izin dönüşü](docs/images/ajan-devir-ve-izin.png)
 
-<p><img src="docs/images/06-izin-donusu.png" width="49%" alt="İzin dönüşü brifingi"> <img src="docs/images/07-not-kontrolu-ve-uyarilar.png" width="49%" alt="Not kontrolü ve uyarılar"></p>
+![Ajana sor](docs/images/ajan-ajana-sor.png)
 
-### 5. Ajana sor
-Ajan veriyi araçlarla kendisi sorgular ve her cümlesine kaynak kimliği ekler.
-
-<p><img src="docs/images/08-ajana-sor-neden.png" width="49%" alt="Ajana sor: Pres-3 neden sabah sorun çıkarıyor"> <img src="docs/images/09-ajana-sor-gunluk-rapor.png" width="49%" alt="Ajana sor: günlük rapor"></p>
-
-### 6. Sınırlarını biliyor
-Çalışanları değerlendirmesi istendiğinde reddeder ve süreci anlatır. Verisi olmayan bir soruda (hava durumu) bilmediğini söyler, bağlantı uydurmaz.
-
-<p><img src="docs/images/10-ajana-sor-calisanlar.png" width="49%" alt="Ajana sor: çalışanlar hakkında"> <img src="docs/images/11-ajana-sor-kapsam-disi.png" width="49%" alt="Ajana sor: kapsam dışı soru"></p>
+![Sınırlarını biliyor](docs/images/ajan-sinirlar.png)
 
 ## Mimari
 
@@ -128,7 +121,7 @@ docs/ARCHITECTURE.md        Katmanlar, veri modeli, kod ve GenAI ayrımı, promp
 docs/SYNTHETIC_DATA.md      Verinin nasıl üretildiği ve sınırları
 docs/DEMO.md                Adım adım demo turu
 docs/CLAUDE_CODE_PLAN.md    Ürünleştirme için görev planı
-docs/images/                Canlı prototipten ekran görüntüleri
+docs/images/                Ekran görüntüleri
 ```
 
 ## Yol haritası
