@@ -464,6 +464,7 @@ function lookup(id){
   const d = DATA.downtime.find(x => x.id === id); if (d) return {t:`Duruş ${id}`, b:`${M[d.machine].name}\nBaşlangıç: ${fmt(d.start)}\nSüre: ${d.minutes ? d.minutes + " dk" : "devam ediyor"}\nERP kodu: ${d.erp_code}\nOperatör açıklaması: “${d.raw_reason}”`};
   const w = DATA.work_orders.find(x => x.id === id); if (w) return {t:`İş emri ${id}`, b:`${M[w.machine].name} · ${w.title}\nDurum: ${w.status} · Öncelik: ${w.priority}\nAçılış: ${fmt(w.created)}\n${w.note}`};
   const r = DATA.rfid.find(x => x.tag === id); if (r) return {t:`RFID ${id}`, b:`${M[r.machine].name} · ${r.component}\nÇalışma: ${r.hours} saat / ömür ${r.limit} saat (%${Math.round(r.hours/r.limit*100)})`};
+  if (id.startsWith("SN:") && /T\d{2}:\d{2}$/.test(id)) { const m = id.match(/^SN:([^:]+):([^:]+):(.+)$/); const mid = m && m[1], key = m && m[2], ts = m && m[3]; const mt = M[mid] && DATA.metrics[M[mid].type].find(x => x.key === key); const pt = mt && series(mid, key).find(p => p[0] === ts); if (mt && pt) return {t:`Sensör ${M[mid].name} · ${mt.label}`, b:`${fmt(ts)} ölçümü: ${pt[1]} ${mt.unit}\nUyarı eşiği: ${mt.warn} · Kritik eşik: ${mt.crit}`}; }
   if (id.startsWith("SN:")) { const [,mid,key] = id.split(":"); const mt = DATA.metrics[M[mid]?.type]?.find(x => x.key === key); if (mt) return {t:`Sensör ${M[mid].name} · ${mt.label}`, b:`Son değer: ${lastVal(mid,key)} ${mt.unit}\nUyarı eşiği: ${mt.warn} · Kritik eşik: ${mt.crit}\nSon 24 saatte eşik dışı ölçüm: ${breaches(mid,24).filter(x=>x.metric===mt.label).length}`}; }
   if (id.startsWith("PT:")) { const [,mid] = id.split(":"); const p = probability(mid); if (p) return {t:`Desen ${M[mid].name}`, b:`Desen: ${p.pattern}\nBugün görüldü: ${p.active_today ? fmt(p.active_today) : "hayır"}\nGeçmiş: ${p.n} desenin ${p.hits}’inde 24 saat içinde duruş\nOlasılık (kod): %${Math.round(p.value*100)} · n=${p.n}${p.low_sample ? " · düşük örneklem" : ""}`}; }
   if (id.startsWith("AN:")) { const a = anomalyById(id); if (a) return {t:`Anomali · ${M[a.machine].name}`, b:`${a.title}\n\n${a.text}`}; }
@@ -481,7 +482,7 @@ function validate(items){
   }
   return {kept, dropped};
 }
-const chips = ids => (ids||[]).map(i => `<button class="chip" data-ev="${esc(i)}">${esc(i.startsWith("SN:") ? "Sensör " + i.split(":")[1] : i.startsWith("PT:") ? "Desen " + i.split(":")[1] : i.startsWith("AN:") ? "Anomali " + i.split(":")[1] : P[i] ? P[i].name : i)}</button>`).join("");
+const chips = ids => (ids||[]).map(i => `<button class="chip" data-ev="${esc(i)}">${esc(i.startsWith("SN:") ? "Sensör " + i.split(":")[1] + (/T(\d{2}:\d{2})$/.test(i) ? " · " + fmt(i.slice(-16)) : "") : i.startsWith("PT:") ? "Desen " + i.split(":")[1] : i.startsWith("AN:") ? "Anomali " + i.split(":")[1] : P[i] ? P[i].name : i)}</button>`).join("");
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-ev]"); if (!b) return;
   const r = lookup(b.dataset.ev); if (!r) return;
@@ -490,6 +491,28 @@ document.addEventListener("click", e => {
 $("#evClose").onclick = () => $("#ev").close();
 
 // ---------- agent (sample) ----------
+// ---------- rich text: markdown bold and inline source ids become chips ----------
+const IDP = "(?:LG-[A-Z0-9]{3,}|DT-\\d{3}|WO-\\d{4}|RF-\\d{4}|P\\d{2}|SN:[A-Z]{3}-[A-Z0-9]+:[a-z_]+(?::\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2})?|PT:[A-Z]{3}-[A-Z0-9]+(?::\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2})?|AN:[A-Z]{3}-[A-Z0-9]+:[A-Za-z0-9_-]+(?::[a-z]+)?)";
+const ID_GROUP = new RegExp("[\\[(]\\s*(" + IDP + "(?:\\s*[,;]\\s*" + IDP + ")*)\\s*[\\])]", "g");
+const ID_ONE = new RegExp("(?<![A-Za-z0-9:-])" + IDP + "(?![A-Za-z0-9])", "g");
+function richHtml(text){
+  let h = esc(text).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  const store = [];
+  const tok = html => { store.push(html); return "\u0000" + (store.length - 1) + "\u0000"; };
+  h = h.replace(ID_GROUP, (all, inner) => { const ids = inner.split(/\s*[,;]\s*/); return ids.every(i => lookup(i)) ? " " + tok(ids.map(i => chips([i])).join("")) : all; });
+  h = h.replace(ID_ONE, id => lookup(id) ? tok(chips([id])) : id);
+  return h.replace(/\u0000(\d+)\u0000/g, (m, i) => store[+i]);
+}
+function enrich(root){
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest(".chip,button,textarea,select,input") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+  for (const n of nodes) {
+    const t = n.nodeValue; if (!/\*\*|[A-Z]{2}[-:]|P\d{2}/.test(t)) continue;
+    const html = richHtml(t); if (html === esc(t)) continue;
+    const span = document.createElement("span"); span.innerHTML = html; n.replaceWith(span);
+  }
+}
 let sample = null;
 const ERR = {not_granted:"Claude kullanımına izin verilmedi. Ajan özellikleri bu oturumda kapalı.", rate_limited:"Çok fazla istek. Biraz sonra tekrar deneyin.", invalid_json:"Ajanın cevabı okunamadı. Tekrar deneyin.", refused:"Ajan bu isteği yanıtlamadı. İsteği değiştirip deneyin.", prompt_too_large:"Bağlam çok büyük, daha kısa pencere seçin.", session_expired:"Oturum sona erdi, yeniden giriş yapın."};
 const errText = e => ERR[e?.code] || "Bağlantı sorunu. Tekrar deneyin.";
@@ -579,7 +602,7 @@ async function runJson(prompt, outSel, runSel, stopSel, render, tier="default"){
   ctl = new AbortController(); busy(runSel, stopSel, true);
   $(outSel).innerHTML = `<p class="thinking">Ajan bağlamı okuyor. Bu işlem 20–60 saniye sürebilir.</p>`;
   if (stopSel) $(stopSel).onclick = () => ctl.abort();
-  try { const j = await sample.json(prompt, {signal: ctl.signal, modelTier: tier, cache: false}); render(j); }
+  try { const j = await sample.json(prompt, {signal: ctl.signal, modelTier: tier, cache: false}); render(j); enrich($(outSel)); }
   catch(e){ $(outSel).innerHTML = e.code === "cancelled" ? `<p class="muted">Durduruldu.</p>` : `<p class="err">${esc(errText(e))}</p>`; }
   finally { busy(runSel, stopSel, false); }
 }
@@ -731,7 +754,7 @@ mentioned_values: notta söylenen ölçüm değerleri (örn. "yüz yetmişlere i
       ${j.safety_flag ? `<div class="small err">Güvenlik işareti konuldu, İSG uzmanına uyarı düşer.</div>` : ""}
       ${j.question_back ? `<div class="small"><strong>Ajanın sorusu:</strong> ${esc(j.question_back)}</div>` : ""}
       <div class="small muted">${where === "db" ? "Ortak deftere kaydedildi, herkes görür." : "Bu cihazda kaydedildi."}</div></div>${iss.length ? `<div class="warnbox small"><strong>Not kontrolü:</strong> ${iss.map(i => esc(i.text)).join(" ")} Uyarılar ekranında düzeltebilirsiniz.</div>` : ""}`;
-    $("#pText").value = ""; $("#pMachine").value = rec.machine; render72(); renderFloor(); if (selected) renderDetail(selected);
+    $("#pText").value = ""; $("#pMachine").value = rec.machine; enrich($("#pResult")); render72(); renderFloor(); if (selected) renderDetail(selected);
   } catch(e){ $("#pResult").innerHTML = `<p class="err">${esc(errText(e))}</p>`; }
   finally { $("#pSave").disabled = false; }
 };
@@ -741,7 +764,7 @@ $("#p72Sum").onclick = async () => {
   $("#p72").insertAdjacentHTML("afterbegin", `<div class="note" id="p72s"><span class="thinking">Özetleniyor…</span></div>`);
   try {
     const {text} = await sample(`${RULES}\n\nGörev: Makineye yeni gelen operatör için son 72 saati EN FAZLA 5 kısa madde olarak özetle. Her maddenin sonuna köşeli parantezde kaynak kimliği yaz. Düz metin, başlık yok.\n\nBağlam:\n${JSON.stringify(pack)}`, {modelTier:"quick", onText:({text}) => { const el = $("#p72s"); if (el) el.innerHTML = `<pre>${esc(text)}</pre>`; }});
-    $("#p72s").innerHTML = `<pre>${esc(text)}</pre>`;
+    $("#p72s").innerHTML = `<pre>${esc(text)}</pre>`; enrich($("#p72s"));
   } catch(e){ const el = $("#p72s"); if (el) el.innerHTML = `<span class="err">${esc(errText(e))}</span>`; }
 };
 
@@ -903,7 +926,7 @@ async function ask(q){
   ctl = new AbortController(); busy("#cSend", "#cStop", true); $("#cStop").onclick = () => ctl.abort();
   try {
     const {text} = await sample([{role:"user", content: RULES + `\n\nŞimdi: ${DATA.now}. Araçlarla veriyi sorgula, cevabında kaynak kimliklerini köşeli parantezde ver. Kısa ve net cevap ver.`}, ...turns.slice(-8)], {tools:TOOLS, cache:false, signal:ctl.signal, onText:({text}) => { bubble.textContent = text; }});
-    bubble.textContent = text; turns.push({role:"assistant", content:text});
+    bubble.textContent = text; enrich(bubble); turns.push({role:"assistant", content:text});
   } catch(e){ bubble.textContent = e.code === "cancelled" ? (e.text || "Durduruldu.") : errText(e); turns.pop(); }
   finally { busy("#cSend", "#cStop", false); }
 }
